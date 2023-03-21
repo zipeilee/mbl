@@ -4,11 +4,17 @@
 using Markdown
 using InteractiveUtils
 
+# ╔═╡ 2cead354-bd91-11ed-357c-5116af3e4d58
+using Yao, YaoPlots
+
+# ╔═╡ 7334452c-c827-44ff-8265-ec178c96eb5f
+using YaoBlocks
+
 # ╔═╡ 4fc226c9-a4e4-424c-863a-0af33b7f18a0
-using Yao, YaoPlots, YaoBlocks,BitBasis
+using BitBasis
 
 # ╔═╡ c1baa811-12e7-4294-944c-24d7ba286a62
-Rzz(theta) = RotationGate(kron(Z,Z), theta) #theta = 2*t when time evaluate
+Rzz(theta) = RotationGate(kron(Z,Z), theta)
 
 # ╔═╡ e50524b0-c399-45c4-8658-a11c6aad3334
 Rxx(theta) = RotationGate(kron(X, X), theta)
@@ -45,60 +51,6 @@ one_site_hopping(tau, i) = chain(
 
 # ╔═╡ ed132fe2-cb3e-4185-b41d-437a0e1b6ff3
 measure(zero_state(4) |> chain(4, one_site_hopping(1,i) for i in 1:3),4; nshots=1024)
-
-# ╔═╡ fb74120d-add6-48ac-a777-6d07d320f3c0
-collect(basis(rand_state(4)))
-
-# ╔═╡ 90999551-69f4-4cf1-a408-51d7e41fe547
-x = [0 1; 1 0]
-
-# ╔═╡ 4adc53f8-845a-45fc-9005-452888096ab8
-state0 = [1, 0]
-
-# ╔═╡ c17fb2b3-88ef-4641-a8ad-049b8a75283a
-state1 = [0, 1]
-
-# ╔═╡ 9b24b523-af51-46c5-a0da-a8381787a3a3
-y = mat(Y)
-
-# ╔═╡ 0fac0e8e-1a77-4de0-8d86-0668680cb0e4
-y'
-
-# ╔═╡ 8c6bf55f-7b4f-408f-b961-ef6044295bbc
-function the_hamiltonian(nbit::Int, W, periodic::Bool=false)
-	sx = i ->  1/2 * put(nbit, i=>X)
-sy = i ->  1/2 * put(nbit, i=>Y)
-sz = i ->  1/2 * put(nbit, i=>Z)
-
-	hopping_term = map(1:(periodic ? nbit : nbit-1)) do i
-		j = i%nbit + 1
-		sx(i)*sx(j)+sy(i)*sy(j)+sz(i)*sz(j) + sy(i)*sz(j) - sz(i)*sy(j) -sx(i)*sz(j) + sz(i)*sx(j) + sx(i)*sy(j) - sy(i)*sx(j)
-	end |> sum
-	
-	Wi = rand(-W:W, nbit)
-
-	disorder = map(1:nbit) do i
-		Wi[i] * sx(i)
-	end |> sum
-
-	hopping_term + disorder
-end
-
-# ╔═╡ 0b7b4c88-b8c7-45f4-9141-1eca62b533d4
-h = Matrix(mat(the_hamiltonian(8,10)))
-
-# ╔═╡ 3a1f4f72-63e0-4fee-ba3c-d40f2f673c66
-map(1:10) do i
-	2 * i
-end
-
-# ╔═╡ 3cb6aa81-87f1-4881-9935-786cee745d92
-function add(x, y)
-	x + y
-end
-
-# ╔═╡ 5f760618-77be-49db-8c96-beffd4c0ed42
-
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -890,6 +842,8 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
+# ╠═2cead354-bd91-11ed-357c-5116af3e4d58
+# ╠═7334452c-c827-44ff-8265-ec178c96eb5f
 # ╠═4fc226c9-a4e4-424c-863a-0af33b7f18a0
 # ╠═c1baa811-12e7-4294-944c-24d7ba286a62
 # ╠═e50524b0-c399-45c4-8658-a11c6aad3334
@@ -899,16 +853,5 @@ version = "3.5.0+0"
 # ╠═1897ac2e-1c34-4d42-b6f9-951d9020bbf5
 # ╠═a81ef31d-c588-4b73-809b-c98171874130
 # ╠═ed132fe2-cb3e-4185-b41d-437a0e1b6ff3
-# ╠═fb74120d-add6-48ac-a777-6d07d320f3c0
-# ╠═90999551-69f4-4cf1-a408-51d7e41fe547
-# ╠═4adc53f8-845a-45fc-9005-452888096ab8
-# ╠═c17fb2b3-88ef-4641-a8ad-049b8a75283a
-# ╠═9b24b523-af51-46c5-a0da-a8381787a3a3
-# ╠═0fac0e8e-1a77-4de0-8d86-0668680cb0e4
-# ╠═8c6bf55f-7b4f-408f-b961-ef6044295bbc
-# ╠═0b7b4c88-b8c7-45f4-9141-1eca62b533d4
-# ╠═3a1f4f72-63e0-4fee-ba3c-d40f2f673c66
-# ╠═3cb6aa81-87f1-4881-9935-786cee745d92
-# ╠═5f760618-77be-49db-8c96-beffd4c0ed42
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

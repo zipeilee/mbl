@@ -5,25 +5,19 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ f96a43bc-bdad-11ed-208a-a72f92027f33
-using Yao,YaoPlots
-
-# ╔═╡ 519d583d-29f7-4c39-bfe8-acc9981a2e8a
-using LinearAlgebra
-
-# ╔═╡ 111850b0-a181-448d-81e3-7f4a6a21bf71
-using Plots
-
-# ╔═╡ 5f1e130c-120d-43c0-b136-db7d2eff12b5
-using BitBasis
-
-# ╔═╡ 42afc426-ff69-4775-8938-b2a7a58e1ef7
-XX = kron(X, X)
+using Yao,YaoPlots, Plots, JLD2, LinearAlgebra
 
 # ╔═╡ 2e230d67-5d92-4e52-a923-2bfd1c17b4cc
-function hamiltonian(nbit::Int,W ; periodic::Bool=false)
-	sx = i -> put(nbit, i=>X)
-	sy = i -> put(nbit, i=>Y)
-	sz = i -> put(nbit, i=>Z)
+"""
+	hamiltonian(nbit::Int, periodic::Bool=true)
+
+1D Heisenberg hamiltonian with Dzyaloshinkii-Moriya and random-field
+
+"""
+function hamiltonian(nbit::Int,W ; periodic::Bool=true)
+	sx = i ->  put(nbit, i=>X)
+	sy = i ->  put(nbit, i=>Y)
+	sz = i ->  put(nbit, i=>Z)
 	hopping_term = map(1:(periodic ? nbit : nbit-1)) do i
 		j = i%nbit + 1
 		sx(i)*sx(j)+sy(i)*sy(j)+sz(i)*sz(j) + sy(i)*sz(j) - sz(i)*sy(j) -sx(i)*sz(j) + sz(i)*sx(j) + sx(i)*sy(j) - sy(i)*sx(j)
@@ -37,17 +31,11 @@ function hamiltonian(nbit::Int,W ; periodic::Bool=false)
 	hopping_term + disorder
 end
 
-# ╔═╡ 8d68d03f-5577-43d2-a1f5-40a37f4039b9
-e, _ = eigen(Matrix(mat(hamiltonian(10,9.45))))
-
-# ╔═╡ ff8d6aba-5369-4ca0-ab87-63810e2c8f84
-# delta_n = [e[i+1] - e[i] for i in 1:16-1]
-
-# ╔═╡ e9e7d2d5-d5df-4f3f-aeba-9f3ed8ba51e4
-# delta_nplus1 = [e[i+2]-e[i+1] for i in 1:16-2]
+# ╔═╡ f73730c4-a3f6-4997-a4f9-123cd55cd404
+typeof(X)
 
 # ╔═╡ 4d069a57-32e6-40d7-88f2-f881fc3fa0b1
-function my_ising(nbit::Int, h; periodic::Bool=false)
+function my_ising(nbit::Int, h; periodic::Bool=true)
 	hopping = map(1:(periodic ? nbit : nbit-1)) do i
 		repeat(nbit, X, (i, i%nbit+1))
 	end |> sum
@@ -55,7 +43,12 @@ function my_ising(nbit::Int, h; periodic::Bool=false)
 end
 
 # ╔═╡ 72d0eb91-6a83-437a-a2ad-ef4a7a30f1e8
-function heisenberg(nbit::Int, W ; periodic::Bool=true)
+
+"""
+1D heisenberg model with random-field
+
+"""
+function heisenberg_randfield(nbit::Int, W ; periodic::Bool=true)
     sx = i -> put(nbit, i => X)
 	
 	hopping = map(1:(periodic ? nbit : nbit-1)) do i
@@ -81,53 +74,48 @@ function transverse_ising(nbit::Int, h::Number; periodic::Bool=true)
 end
 
 # ╔═╡ 58fcd024-02da-48f6-909d-5ac664742b7b
-elists = [ eigvals(Matrix(mat(hamiltonian(10,h)))) for h in 8:0.01:10]
+# ╠═╡ disabled = true
+#=╠═╡
+elists = [ eigvals(Matrix(mat(transverse_ising(14,h;periodic=false)))) for h in 				0:0.01:40]  
+  ╠═╡ =#
 
-# ╔═╡ 2cfd222c-a54e-45a1-b8db-3aa7ed2d94ac
-elists[1][:]
+# ╔═╡ 64d5992c-3588-4402-a477-2e61999e274e
+# ╠═╡ disabled = true
+#=╠═╡
+length(0:0.01:1)
+  ╠═╡ =#
 
 # ╔═╡ dbdd4718-8f07-4a88-96f6-d186fa2879d6
+# ╠═╡ disabled = true
+#=╠═╡
 # elist for the top 15 energy
 
-# ╔═╡ af9a3e30-a35d-49bb-ba87-31dc9cb64872
-# Plot energy band
+ePlotlists = [map(i -> (elists[i][j]-elists[i][1]), 1:201) for j in 1:15]
+  ╠═╡ =#
 
-# ╔═╡ 2774f14f-7ba4-46e5-9b3a-7566bc69dd50
-md"""
-calculate the ratio
-"""
+# ╔═╡ af9a3e30-a35d-49bb-ba87-31dc9cb64872
+# ╠═╡ disabled = true
+#=╠═╡
+# Plot energy band
+Plots.scatter(0:.01:2, ePlotlists,ms=0.5,legend=:outertopright)
+  ╠═╡ =#
 
 # ╔═╡ c36da86e-94ea-4b88-956e-0aeb3f7ed75b
+#=╠═╡
 maxvar = i -> maximum(map(j -> elists[i][j+1] - elists[i][j], 1:1023))
-
-# ╔═╡ 71b492cb-e400-448c-86b1-2e46cb497bdf
-a = rand(3)
-
-# ╔═╡ 483a06a1-cde6-474f-a542-dde00b7add76
-im * 0.3 * [1 2; 3 4] 
-
-# ╔═╡ 5997af93-48aa-4f10-acf3-2a0bad9c840a
-md"""
-calculate time evualtion
-"""
-
-# ╔═╡ 95ced87e-4ee8-446c-996f-d64dc4fbc3b7
-U = t -> exp(Matrxi(mat(hamiltonian))*im*t)
-
-# ╔═╡ 004d9208-48cd-4c30-a0d9-feba1a4ac0e3
-
+  ╠═╡ =#
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
-BitBasis = "50ba71b6-fa0f-514d-ae9a-0916efc90dcf"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Yao = "5872b779-8223-5990-8dd0-5abbb0748c8c"
 YaoPlots = "32cfe2d9-419e-45f2-8191-2267705d8dbc"
 
 [compat]
-BitBasis = "~0.7.4"
+JLD2 = "~0.4.31"
 Plots = "~1.38.7"
 Yao = "~0.7.4"
 YaoPlots = "~0.7.3"
@@ -139,7 +127,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.5"
 manifest_format = "2.0"
-project_hash = "95c1bb6f12583039782a95c990779be664188f19"
+project_hash = "92e9df6be13f421fe27a2582ac05c35e4a259eb4"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
@@ -338,6 +326,12 @@ git-tree-sha1 = "74faea50c1d007c85837327f6775bea60b5492dd"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
 version = "4.4.2+2"
 
+[[deps.FileIO]]
+deps = ["Pkg", "Requires", "UUIDs"]
+git-tree-sha1 = "7be5f99f7d15578798f338f5433b6c432ea8037b"
+uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+version = "1.16.0"
+
 [[deps.FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
@@ -477,6 +471,12 @@ version = "0.2.2"
 git-tree-sha1 = "fa6287a4469f5e048d763df38279ee729fbd44e5"
 uuid = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 version = "1.4.0"
+
+[[deps.JLD2]]
+deps = ["FileIO", "MacroTools", "Mmap", "OrderedCollections", "Pkg", "Printf", "Reexport", "Requires", "TranscodingStreams", "UUIDs"]
+git-tree-sha1 = "42c17b18ced77ff0be65957a591d34f4ed57c631"
+uuid = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+version = "0.4.31"
 
 [[deps.JLFzf]]
 deps = ["Pipe", "REPL", "Random", "fzf_jll"]
@@ -1276,27 +1276,15 @@ version = "1.4.1+0"
 
 # ╔═╡ Cell order:
 # ╠═f96a43bc-bdad-11ed-208a-a72f92027f33
-# ╠═42afc426-ff69-4775-8938-b2a7a58e1ef7
 # ╠═2e230d67-5d92-4e52-a923-2bfd1c17b4cc
-# ╠═519d583d-29f7-4c39-bfe8-acc9981a2e8a
-# ╠═8d68d03f-5577-43d2-a1f5-40a37f4039b9
-# ╠═ff8d6aba-5369-4ca0-ab87-63810e2c8f84
-# ╠═e9e7d2d5-d5df-4f3f-aeba-9f3ed8ba51e4
+# ╠═f73730c4-a3f6-4997-a4f9-123cd55cd404
 # ╠═4d069a57-32e6-40d7-88f2-f881fc3fa0b1
 # ╠═72d0eb91-6a83-437a-a2ad-ef4a7a30f1e8
 # ╠═02c1f7fb-057d-4641-aa3d-24260712a3b9
 # ╠═58fcd024-02da-48f6-909d-5ac664742b7b
-# ╠═2cfd222c-a54e-45a1-b8db-3aa7ed2d94ac
-# ╠═111850b0-a181-448d-81e3-7f4a6a21bf71
+# ╠═64d5992c-3588-4402-a477-2e61999e274e
 # ╠═dbdd4718-8f07-4a88-96f6-d186fa2879d6
 # ╠═af9a3e30-a35d-49bb-ba87-31dc9cb64872
-# ╠═2774f14f-7ba4-46e5-9b3a-7566bc69dd50
 # ╠═c36da86e-94ea-4b88-956e-0aeb3f7ed75b
-# ╠═71b492cb-e400-448c-86b1-2e46cb497bdf
-# ╠═483a06a1-cde6-474f-a542-dde00b7add76
-# ╠═5997af93-48aa-4f10-acf3-2a0bad9c840a
-# ╠═95ced87e-4ee8-446c-996f-d64dc4fbc3b7
-# ╠═5f1e130c-120d-43c0-b136-db7d2eff12b5
-# ╠═004d9208-48cd-4c30-a0d9-feba1a4ac0e3
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

@@ -1,0 +1,1 @@
+julia -E 'using Pluto; Pluto.run(notebook_path_suggestion=ENV["PWD"])' & jupyter lab
