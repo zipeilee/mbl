@@ -1,6 +1,6 @@
 
 
-using Yao, BitBasis, Random, LinearAlgebra, Distributions
+using Yao, BitBasis, Random, LinearAlgebra, Distributions, CUDA
 
 
 # export haimltonian, U Matrix, get_final_state, get_final_state_list, inf_otoc
@@ -59,7 +59,7 @@ function xxz(nbit::Int, J1, J2, W, periodic::Bool=false)
 		J1 * (sx(i)*sx(j)+sy(i)*sy(j))+J2 * (sz(i)*sz(j)) 
 	end |> sum
 
-	Wi = rand(-W:0.1:W, nbit)
+	Wi = rand(-W:0.00001:W, nbit)
 
 	disorder = map(1:nbit) do i
 		Wi[i] * sx(i)
@@ -117,11 +117,11 @@ Time evlution of haimltonian
 """
 
 function UMatrix(t, hamiltonian)
-    exp(Matrix(mat(hamiltonian)) * -im * t)
+    exp(Matrix(Yao.mat(hamiltonian)) * -im * t)
 end
 
 function UdagMatrix(t, hamiltonian)
-    exp(Matrix(mat(hamiltonian)) * im * t)
+    exp(Matrix(Yao.mat(hamiltonian)) * im * t)
 end
 
 function get_final_state(t, hamiltonian;initstate)
@@ -142,7 +142,7 @@ get_final_reg = finalstate -> arrayreg(finalstate)
 
 
 """
-	inv_otoc(op1, op2;t,hamiltonian, nbit::Int64,i::Int64,j::Int64)
+	inf_otoc(op1, op2;t,hamiltonian, nbit::Int64,i::Int64,j::Int64)
 Calculate infinite temperature for Location Pauli Matrix X, Y, Z
 	
 		F(t) = < W(t)dagger V(0)dagger W(t) V(0)>_beta=0
@@ -162,3 +162,22 @@ function inf_otoc(op1, op2;t,hamiltonian, nbit::Int64,i::Int64,j::Int64)
 end
 
 
+function cu_inf_otoc(op1, op2;t,hamiltonian, nbit::Int64,i::Int64,j::Int64)
+	mat1 = CUDA.zeros(ComplexF64,(2^nbit,2^nbit,2^nbit))
+	mat1 .+= cu(Matrix(Yao.mat(put(nbit, i=>op1)))) 
+	
+	mat2 = CUDA.zeros(ComplexF64,(2^nbit,2^nbit,2^nbit))
+	mat2 .+= cu(UdagMatrix(t,hamiltonian)) * cu(Matrix(Yao.mat(put(nbit, j=>op2)))) * cu(UMatrix(t, hamiltonian))
+	
+	reglist = collect(basis(rand_state(nbit)))
+	statelist = zeros(2^nbit,2^nbit)
+	st = state.(arrayreg.(reglist))
+	for i in 2^nbit
+		statelist[:,i] += st[i]
+	end
+	statelist = cu(statelist)
+	
+	var = dot.(statelist,adjoint.(mat2) .* adjonin.(mat1) .* mat2 .* mat1 .* statelist)
+	sum(var) / (2^nbit)
+
+end
