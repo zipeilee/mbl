@@ -1,11 +1,7 @@
 
+export  UMatrix, get_final_state, get_final_state_list, inf_otoc
 
-using Yao, BitBasis, Random, LinearAlgebra, Distributions
 
-
-# export haimltonian, U Matrix, get_final_state, get_final_state_list, inf_otoc
-
-include("hamiltonians.jl")
 
 """
     UMatrix(t)
@@ -50,7 +46,7 @@ function inf_otoc(op1, op2;t,hamiltonian, nbit::Int64,i::Int64,j::Int64)
 	mat2 = UdagMatrix(t,hamiltonian) * Matrix(mat(put(nbit, j=>op2))) * UMatrix(t, hamiltonian)
 	
 	reglist = collect(basis(rand_state(nbit)))
-	statelist                                                                                                  = [state(arrayreg(r)) for r in reglist]
+	statelist = [state(arrayreg(r)) for r in reglist]
 
 	var = [dot(state,mat2'*mat1'*mat2*mat1*state) for state in statelist]
 	sum(var) / (2^nbit)
@@ -58,3 +54,14 @@ function inf_otoc(op1, op2;t,hamiltonian, nbit::Int64,i::Int64,j::Int64)
 end
 
 
+function inf_otoc(op1,op2;U,nbit::Int,i::Int,j::Int)
+	mat1 = Matrix(mat(put(nbit, i==>op1)))
+	mat2 = U' * Matrix(mat(put(nbit, j==>op2))) * U
+
+	reglist = collect(basis(rand_state(nbit)))
+	statelist = [state(arrayreg(r)) for r in reglist]
+
+	var = [dot(state,mat2'*mat1'*mat2*mat1*state) for state in statelist]
+	sum(var) / (2^nbit)
+ 
+end
